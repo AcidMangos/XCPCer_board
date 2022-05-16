@@ -23,8 +23,8 @@ type dbRequest struct {
 	args  []interface{}
 }
 
-//newFlushProcessor 新持久化处理器
-func newFlushProcessor() {
+//newFlusher 新持久化处理器
+func newFlusher() {
 	for {
 		i := <-flushCh
 		switch v := i.(type) {
@@ -58,14 +58,14 @@ func internalFlushDB(req *dbRequest) {
 
 //FlushRedis 刷新Redis
 func FlushRedis(kvs []KV) {
-	flushCh <- redisRequest{
+	flushCh <- &redisRequest{
 		kvs: kvs,
 	}
 }
 
 //FlushDB 刷新DB
 func FlushDB(query string, args ...interface{}) {
-	flushCh <- dbRequest{
+	flushCh <- &dbRequest{
 		query: query,
 		args:  args,
 	}
