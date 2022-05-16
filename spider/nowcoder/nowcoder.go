@@ -36,5 +36,5 @@ func Flush(uid string) {
 	// 拉出所有kv对
 	kvs := scrape(uid)
 	// 向持久化处理协程注册持久化处理函数
-	scraper.FlushRedis(kvs)
+	scraper.JustLog(kvs)
 }
