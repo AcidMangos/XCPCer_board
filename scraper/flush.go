@@ -14,7 +14,17 @@ var (
 	flushCh = make(chan interface{})
 )
 
+//KV 处理单元返回的键值对
+type KV struct {
+	Key string
+	Val interface{}
+}
+
 type redisRequest struct {
+	kvs []KV
+}
+
+type justLog struct {
 	kvs []KV
 }
 
@@ -25,13 +35,14 @@ type dbRequest struct {
 
 //newFlusher 新持久化处理器
 func newFlusher() {
-	for {
-		i := <-flushCh
+	for i := range flushCh {
 		switch v := i.(type) {
 		case *redisRequest:
 			internalFlushRedis(v)
 		case *dbRequest:
 			internalFlushDB(v)
+		case *justLog:
+			log.Infof("scrape result %v", v.kvs)
 		}
 	}
 }
@@ -59,6 +70,13 @@ func internalFlushDB(req *dbRequest) {
 //FlushRedis 刷新Redis
 func FlushRedis(kvs []KV) {
 	flushCh <- &redisRequest{
+		kvs: kvs,
+	}
+}
+
+//JustLog 刷新仅日志输出
+func JustLog(kvs []KV) {
+	flushCh <- &justLog{
 		kvs: kvs,
 	}
 }

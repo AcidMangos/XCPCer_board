@@ -24,12 +24,12 @@ const (
 
 var (
 	practiceScraper = scraper.NewScraper(
-		scraper.WithCallback(practiceCallback),
+		practiceCallback,
 	)
 )
 
 //practiceCallback 处理牛客个人练习页面的回调函数
-func practiceCallback(c *colly.Collector, res *scraper.Processor) {
+func practiceCallback(c *colly.Collector) {
 	//用goquery
 	c.OnHTML(".nk-container.acm-container .nk-container .nk-main.with-profile-menu.clearfix .my-state-main",
 		func(element *colly.HTMLElement) {
@@ -39,7 +39,7 @@ func practiceCallback(c *colly.Collector, res *scraper.Processor) {
 			if err != nil {
 				log.Errorf("str atoi Error %v", err)
 			}
-			res.Set(getPassAmountKey(uid), num)
+			element.Request.Ctx.Put(getPassAmountKey(uid), num)
 		},
 	)
 }
@@ -50,14 +50,18 @@ func practiceCallback(c *colly.Collector, res *scraper.Processor) {
 
 //fetchPractice 抓取个人练习页面的所有
 func fetchPractice(uid string) ([]scraper.KV, error) {
-	return practiceScraper.Scrape(func(c *colly.Collector) error {
-		ctx := colly.NewContext()
-		ctx.Put("uid", uid)
-		err := c.Request("GET", getContestPracticeUrl(uid), nil, ctx, nil)
-		if err != nil {
-			log.Errorf("scraper error %v", err)
-			return err
-		}
-		return nil
+	// 构造上下文，及传入参数
+	ctx := colly.NewContext()
+	ctx.Put("uid", uid)
+	// 请求
+	err := practiceScraper.C.Request("GET", getContestPracticeUrl(uid), nil, ctx, nil)
+	if err != nil {
+		log.Errorf("scraper error %v", err)
+		return nil, err
+	}
+	// 解构出kv对
+	kvs := scraper.Parse(ctx, map[string]struct{}{
+		"uid": {},
 	})
+	return kvs, nil
 }
