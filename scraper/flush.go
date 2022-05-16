@@ -23,8 +23,8 @@ type dbRequest struct {
 	args  []interface{}
 }
 
-//newFlushProcessor 新持久化处理器
-func newFlushProcessor() {
+//newFlusher 新持久化处理器
+func newFlusher() {
 	for {
 		i := <-flushCh
 		switch v := i.(type) {
