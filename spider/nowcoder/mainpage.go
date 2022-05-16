@@ -65,11 +65,6 @@ func mainCallback(c *colly.Collector, res *scraper.Processor) {
 
 }
 
-//getContestProfileUrl 获取牛客竞赛区个人主页URL
-func getContestProfileUrl(nowCoderId string) string {
-	return "https://ac.nowcoder.com/acm/contest/profile/" + nowCoderId
-}
-
 //-------------------------------------------------------------------------------------------//
 // 对外暴露函数
 //-------------------------------------------------------------------------------------------//

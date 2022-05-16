@@ -1,17 +1,20 @@
 package codeforces
 
 import (
+	"XCPCer_board/scraper"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
-	log "github.com/sirupsen/logrus"
-	"strconv"
+	"github.com/gocolly/colly"
 	"strings"
 )
 
-//---------------------------------------------------------------------//
-// codeforces个人信息 //
-//---------------------------------------------------------------------//
-// CF  Key
+var (
+	intScraper = scraper.NewScraper(
+		scraper.WithCallback(intCallback),
+		scraper.WithThreads[int](2),
+	)
+)
+
 const (
 	// key
 	// 个人总过题数
@@ -45,23 +48,15 @@ func lastMonthAmountHandler(doc *goquery.Selection) string {
 	return strings.Split(retStr, " ")[0]
 }
 
-//---------------------------------------------------------------------//
-// 部分共用函数 //
-//---------------------------------------------------------------------//
-//转化int
-func strToInt(doc *goquery.Selection, f func(doc *goquery.Selection) string) int {
-	ret := f(doc)
-	num, err := strconv.Atoi(ret)
-	if err != nil {
-		log.Errorf("CF strToInt get err:%v\tand the return is %v:", num, err)
-		return -1
-	}
-	return num
+func intCallback(c *colly.Collector, res *scraper.Processor) {
+	c.OnHTML("#body", func(e *colly.HTMLElement) {
+		//fmt.Println(r.DOM.First().Text())
+		res.Set(problemPassAmountKey, strToInt(e.DOM, problemPassAmountHandler))
+		res.Set(lastMonthPassAmount, strToInt(e.DOM, lastMonthAmountHandler))
+	})
 }
 
-func getPersonPage(uid string) string {
-	return "https://codeforces.com/profile/" + uid
-}
-func getPersonProblemPage(uid string) string {
-	return "https://codeforces.com/submissions/" + uid
+//GetIntMsg 对外暴露函数，获取int信息
+func GetIntMsg(uid string) ([]scraper.KV, error) {
+	return intScraper.Scrape(getPersonPage(uid))
 }

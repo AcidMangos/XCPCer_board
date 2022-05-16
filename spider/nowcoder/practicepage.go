@@ -2,7 +2,6 @@ package nowcoder
 
 import (
 	"XCPCer_board/scraper"
-	"fmt"
 	"github.com/gocolly/colly"
 	log "github.com/sirupsen/logrus"
 	"strconv"
@@ -43,16 +42,6 @@ func practiceCallback(c *colly.Collector, res *scraper.Processor) {
 			res.Set(getPassAmountKey(uid), num)
 		},
 	)
-}
-
-//getContestPracticeUrl 获取牛客竞赛区个人练习URL
-func getContestPracticeUrl(nowCoderId string) string {
-	return getContestProfileUrl(nowCoderId) + "/practice-coding"
-}
-
-//getNowCoderContestBaseFindRule 获取牛客竞赛区基础的
-func getNowCoderContestBaseFindRule(keyWord string) string {
-	return fmt.Sprintf(".my-state-item:contains(%v) .state-num", keyWord)
 }
 
 //---------------------------------------------------------------------//

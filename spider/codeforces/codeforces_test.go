@@ -53,7 +53,7 @@ func cfTest(t *testing.T) {
 		problemPassAmountKey: 350,
 	})
 	checkStrError(t, model.TestCodeForcesIdLYF, "CFString", ScrapeStr, map[string]string{
-		ratingNameKey: "Expert ",
+		rankingNameKey: "Expert ",
 	})
 
 }

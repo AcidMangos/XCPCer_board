@@ -58,14 +58,14 @@ func internalFlushDB(req *dbRequest) {
 
 //FlushRedis 刷新Redis
 func FlushRedis(kvs []KV) {
-	flushCh <- redisRequest{
+	flushCh <- &redisRequest{
 		kvs: kvs,
 	}
 }
 
 //FlushDB 刷新DB
 func FlushDB(query string, args ...interface{}) {
-	flushCh <- dbRequest{
+	flushCh <- &dbRequest{
 		query: query,
 		args:  args,
 	}
