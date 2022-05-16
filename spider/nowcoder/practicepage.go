@@ -32,14 +32,14 @@ var (
 func practiceCallback(c *colly.Collector) {
 	//用goquery
 	c.OnHTML(".nk-container.acm-container .nk-container .nk-main.with-profile-menu.clearfix .my-state-main",
-		func(element *colly.HTMLElement) {
-			uid := element.Request.Ctx.Get("uid")
+		func(e *colly.HTMLElement) {
+			uid := e.Request.Ctx.Get("uid")
 			// 题目通过数量
-			num, err := strconv.Atoi(element.DOM.Find(getNowCoderContestBaseFindRule(passAmountKeyWord)).First().Text())
+			num, err := strconv.Atoi(e.DOM.Find(getNowCoderContestBaseFindRule(passAmountKeyWord)).First().Text())
 			if err != nil {
 				log.Errorf("str atoi Error %v", err)
 			}
-			element.Request.Ctx.Put(getPassAmountKey(uid), num)
+			e.Request.Ctx.Put(getPassAmountKey(uid), num)
 		},
 	)
 }
