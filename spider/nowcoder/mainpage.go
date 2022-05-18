@@ -4,6 +4,7 @@ import (
 	"XCPCer_board/scraper"
 	"fmt"
 	"github.com/gocolly/colly"
+	log "github.com/sirupsen/logrus"
 	"strconv"
 )
 
@@ -17,51 +18,50 @@ import (
 // 牛客finder存储Key
 const (
 	// 个人主页
-	mainRatingKey              = "NowCoder_Main_Rating"
-	mainRatingRatingKey        = "NowCoder_Main_RatingRanking"
-	mainAttendContestAmountKey = "NowCoder_Main_AttendContestAmount"
+	ratingKey        = "nowcoder_rating"
+	rankingKey       = "nowcoder_ranking"
+	contestAmountKey = "nowcoder_attend_contest_amount"
 
 	// 个人主页selector关键字
-	mainRatingKeyWord              = "Rating"
-	mainRatingRankingKeyWord       = "Rating排名"
-	mainAttendContestAmountKeyWord = "次比赛"
+	ratingKeyWord        = "Rating"
+	ratingRankingKeyWord = "Rating排名"
+	contestAmountKeyWord = "次比赛"
 )
 
 var (
 	mainScraper = scraper.NewScraper(
-		scraper.WithCallback(mainCallback),
-		scraper.WithThreads(2),
+		mainCallback,
 	)
 )
 
 //mainCallback 处理牛客个人主页的回调函数
-func mainCallback(c *colly.Collector, res *scraper.Processor) {
+func mainCallback(c *colly.Collector) {
 	//用goquery
 	c.OnHTML(".nk-container.acm-container .nk-container .nk-main.with-profile-menu.clearfix .my-state-main",
-		func(element *colly.HTMLElement) {
+		func(e *colly.HTMLElement) {
+			uid := e.Request.Ctx.Get("uid")
 			// rating
-			ret := element.DOM.Find(fmt.Sprintf(".my-state-item:contains(%v) .state-num.rate-score5",
-				mainRatingKeyWord)).First().Text()
-			if num, err := strconv.Atoi(ret); err == nil {
-				res.Set(mainRatingKey, num)
+			num, err := strconv.Atoi(e.DOM.Find(fmt.Sprintf(".my-state-item:contains(%v) .state-num.rate-score5",
+				ratingKeyWord)).First().Text())
+			if err != nil {
+				log.Errorf("str atoi Error %v", err)
 			}
+			e.Request.Ctx.Put(getRatingKey(uid), num)
 			// 排名
-			ret = element.DOM.Find(getNowCoderContestBaseFindRule(mainRatingRankingKeyWord)).First().Text()
-			if num, err := strconv.Atoi(ret); err == nil {
-				res.Set(mainRatingRatingKey, num)
+			num, err = strconv.Atoi(e.DOM.Find(getNowCoderContestBaseFindRule(ratingRankingKeyWord)).First().Text())
+			if err != nil {
+				log.Errorf("str atoi Error %v", err)
 			}
-			ret = element.DOM.Find(getNowCoderContestBaseFindRule(mainAttendContestAmountKeyWord)).First().Text()
-			if num, err := strconv.Atoi(ret); err == nil {
-				res.Set(mainAttendContestAmountKey, num)
+			e.Request.Ctx.Put(getRankingKey(uid), num)
+			// 过题数
+			num, err = strconv.Atoi(e.DOM.Find(getNowCoderContestBaseFindRule(contestAmountKeyWord)).First().Text())
+			if err != nil {
+				log.Errorf("str atoi Error %v", err)
 			}
+			e.Request.Ctx.Put(getContestAmountKey(uid), num)
 		},
 	)
 
-}
-
-//getNowCoderContestProfileBaseUrl 获取牛客竞赛区个人主页URL
-func getNowCoderContestProfileBaseUrl(nowCoderId string) string {
-	return "https://ac.nowcoder.com/acm/contest/profile/" + nowCoderId
 }
 
 //-------------------------------------------------------------------------------------------//
@@ -70,5 +70,18 @@ func getNowCoderContestProfileBaseUrl(nowCoderId string) string {
 
 //fetchMainPage 抓取个人主页页面所有
 func fetchMainPage(uid string) ([]scraper.KV, error) {
-	return mainScraper.Scrape(getNowCoderContestProfileBaseUrl(uid))
+	// 构造上下文，及传入参数
+	ctx := colly.NewContext()
+	ctx.Put("uid", uid)
+	// 请求
+	err := mainScraper.C.Request("GET", getContestProfileUrl(uid), nil, ctx, nil)
+	if err != nil {
+		log.Errorf("scraper error %v", err)
+		return nil, err
+	}
+	// 解构出kv对
+	kvs := scraper.Parse(ctx, map[string]struct{}{
+		"uid": {},
+	})
+	return kvs, nil
 }

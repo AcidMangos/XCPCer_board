@@ -14,13 +14,6 @@ var (
 		fetchMainPage,
 		fetchPractice,
 	}
-	// 匹配持久化处理函数
-	persistHandlerMap = map[string]func(uid string) func(string, interface{}) error{
-		mainRatingKey:              emptyPersistHandler,
-		mainRatingRatingKey:        emptyPersistHandler,
-		mainAttendContestAmountKey: emptyPersistHandler,
-		practicePassAmountKey:      emptyPersistHandler,
-	}
 )
 
 //scrape 拉取牛客的所有结果
@@ -38,34 +31,10 @@ func scrape(uid string) (res []scraper.KV) {
 	return res
 }
 
-//emptyPersistHandler 空持久化函数
-func emptyPersistHandler(uid string) func(string, interface{}) error {
-	return func(key string, val interface{}) error {
-		//dao.RedisClient.Set()
-		//dao.DBClient.ExecContext()
-		log.Infof("Nowcoder uid :%v Key %v Val %v", uid, key, val)
-		return nil
-	}
-}
-
-//matchPersistHandlers 匹配持久化函数
-func matchPersistHandlers(uid string, kvs []scraper.KV) []scraper.Persist {
-	var res []scraper.Persist
-	for ind, _ := range kvs {
-		h, ok := persistHandlerMap[kvs[ind].Key]
-		if ok {
-			res = append(res, kvs[ind].GetPersistHandler(scraper.NewPersistHandler(h(uid))))
-		}
-	}
-	return res
-}
-
 //Flush 刷新某用户牛客id信息
 func Flush(uid string) {
 	// 拉出所有kv对
 	kvs := scrape(uid)
-	// 为所有key对匹配持久化函数
-	persists := matchPersistHandlers(uid, kvs)
 	// 向持久化处理协程注册持久化处理函数
-	scraper.RegisterPersist(persists...)
+	scraper.JustLog(kvs)
 }

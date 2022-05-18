@@ -5,15 +5,15 @@ import (
 )
 
 const (
-	errorHTTPResponseStatus = 259001
-	errorScrapeTimeout      = 259002
-	errorScrapeCallType     = 259003
-	errorConfigNotFound     = 259004
+	errorHTTPResponseStatus = 259000 + iota
+	errorScrapeTimeout
+	errorConfigNotFound
+	errorResponse
 )
 
 var (
 	HTTPResponseStatusError = errs.NewError(errorHTTPResponseStatus, "HTTP请求相应状态错误")
 	ScrapeTimeoutError      = errs.NewError(errorScrapeTimeout, "处理调度超时")
-	ScrapeCallTypeError     = errs.NewError(errorScrapeCallType, "scrape类型错误")
 	ConfigNotFoundError     = errs.NewError(errorConfigNotFound, "配置文件缺失")
+	ResponseError           = errs.NewError(errorResponse, "响应错误")
 )

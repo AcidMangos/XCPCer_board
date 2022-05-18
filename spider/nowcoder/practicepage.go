@@ -2,8 +2,8 @@ package nowcoder
 
 import (
 	"XCPCer_board/scraper"
-	"fmt"
 	"github.com/gocolly/colly"
+	log "github.com/sirupsen/logrus"
 	"strconv"
 )
 
@@ -16,40 +16,32 @@ import (
 // 牛客finder存储Key
 const (
 	// 个人练习页面
-	practicePassAmountKey = "NowCoder_Practice_PassAmount"
+	passAmountKey = "nowcoder_pass_amount"
 
 	// 个人练习selector关键字
-	practicePassAmountKeyWord = "题已通过"
+	passAmountKeyWord = "题已通过"
 )
 
 var (
 	practiceScraper = scraper.NewScraper(
-		scraper.WithCallback(practiceCallback),
+		practiceCallback,
 	)
 )
 
 //practiceCallback 处理牛客个人练习页面的回调函数
-func practiceCallback(c *colly.Collector, res *scraper.Processor) {
+func practiceCallback(c *colly.Collector) {
 	//用goquery
 	c.OnHTML(".nk-container.acm-container .nk-container .nk-main.with-profile-menu.clearfix .my-state-main",
-		func(element *colly.HTMLElement) {
+		func(e *colly.HTMLElement) {
+			uid := e.Request.Ctx.Get("uid")
 			// 题目通过数量
-			ret := element.DOM.Find(getNowCoderContestBaseFindRule(practicePassAmountKeyWord)).First().Text()
-			if num, err := strconv.Atoi(ret); err == nil {
-				res.Set(practicePassAmountKey, num)
+			num, err := strconv.Atoi(e.DOM.Find(getNowCoderContestBaseFindRule(passAmountKeyWord)).First().Text())
+			if err != nil {
+				log.Errorf("str atoi Error %v", err)
 			}
+			e.Request.Ctx.Put(getPassAmountKey(uid), num)
 		},
 	)
-}
-
-//getNowCoderContestProfilePracticeUrl 获取牛客竞赛区个人练习URL
-func getNowCoderContestProfilePracticeUrl(nowCoderId string) string {
-	return getNowCoderContestProfileBaseUrl(nowCoderId) + "/practice-coding"
-}
-
-//getNowCoderContestBaseFindRule 获取牛客竞赛区基础的
-func getNowCoderContestBaseFindRule(keyWord string) string {
-	return fmt.Sprintf(".my-state-item:contains(%v) .state-num", keyWord)
 }
 
 //---------------------------------------------------------------------//
@@ -58,5 +50,18 @@ func getNowCoderContestBaseFindRule(keyWord string) string {
 
 //fetchPractice 抓取个人练习页面的所有
 func fetchPractice(uid string) ([]scraper.KV, error) {
-	return practiceScraper.Scrape(getNowCoderContestProfilePracticeUrl(uid))
+	// 构造上下文，及传入参数
+	ctx := colly.NewContext()
+	ctx.Put("uid", uid)
+	// 请求
+	err := practiceScraper.C.Request("GET", getContestPracticeUrl(uid), nil, ctx, nil)
+	if err != nil {
+		log.Errorf("scraper error %v", err)
+		return nil, err
+	}
+	// 解构出kv对
+	kvs := scraper.Parse(ctx, map[string]struct{}{
+		"uid": {},
+	})
+	return kvs, nil
 }
