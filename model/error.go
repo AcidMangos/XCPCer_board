@@ -9,6 +9,7 @@ const (
 	errorScrapeTimeout
 	errorConfigNotFound
 	errorResponse
+	errorUid
 )
 
 var (
@@ -16,4 +17,5 @@ var (
 	ScrapeTimeoutError      = errs.NewError(errorScrapeTimeout, "处理调度超时")
 	ConfigNotFoundError     = errs.NewError(errorConfigNotFound, "配置文件缺失")
 	ResponseError           = errs.NewError(errorResponse, "响应错误")
+	UidError                = errs.NewError(errorUid, "用户id缺失")
 )

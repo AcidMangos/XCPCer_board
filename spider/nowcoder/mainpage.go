@@ -1,6 +1,7 @@
 package nowcoder
 
 import (
+	"XCPCer_board/model"
 	"XCPCer_board/scraper"
 	"fmt"
 	"github.com/gocolly/colly"
@@ -15,19 +16,6 @@ import (
 // 基础方法
 //-------------------------------------------------------------------------------------------//
 
-// 牛客finder存储Key
-const (
-	// 个人主页
-	ratingKey        = "nowcoder_rating"
-	rankingKey       = "nowcoder_ranking"
-	contestAmountKey = "nowcoder_attend_contest_amount"
-
-	// 个人主页selector关键字
-	ratingKeyWord        = "Rating"
-	ratingRankingKeyWord = "Rating排名"
-	contestAmountKeyWord = "次比赛"
-)
-
 var (
 	mainScraper = scraper.NewScraper(
 		mainCallback,
@@ -40,25 +28,32 @@ func mainCallback(c *colly.Collector) {
 	c.OnHTML(".nk-container.acm-container .nk-container .nk-main.with-profile-menu.clearfix .my-state-main",
 		func(e *colly.HTMLElement) {
 			uid := e.Request.Ctx.Get("uid")
+			if uid == "" {
+				log.Errorf("%v", model.UidError)
+				return
+			}
 			// rating
 			num, err := strconv.Atoi(e.DOM.Find(fmt.Sprintf(".my-state-item:contains(%v) .state-num.rate-score5",
 				ratingKeyWord)).First().Text())
 			if err != nil {
 				log.Errorf("str atoi Error %v", err)
+			} else {
+				e.Request.Ctx.Put(GetRatingKey(uid), num)
 			}
-			e.Request.Ctx.Put(getRatingKey(uid), num)
 			// 排名
 			num, err = strconv.Atoi(e.DOM.Find(getNowCoderContestBaseFindRule(ratingRankingKeyWord)).First().Text())
 			if err != nil {
 				log.Errorf("str atoi Error %v", err)
+			} else {
+				e.Request.Ctx.Put(GetRankingKey(uid), num)
 			}
-			e.Request.Ctx.Put(getRankingKey(uid), num)
 			// 过题数
 			num, err = strconv.Atoi(e.DOM.Find(getNowCoderContestBaseFindRule(contestAmountKeyWord)).First().Text())
 			if err != nil {
 				log.Errorf("str atoi Error %v", err)
+			} else {
+				e.Request.Ctx.Put(GetContestAmountKey(uid), num)
 			}
-			e.Request.Ctx.Put(getContestAmountKey(uid), num)
 		},
 	)
 
