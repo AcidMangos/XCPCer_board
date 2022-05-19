@@ -13,16 +13,6 @@ import (
 //---------------------------------------------------------------------//
 //  Key
 
-const (
-	//key
-
-	RatingKey     = "atc_rating"
-	contestSumKey = "atc_contest_sum"
-	rankKey       = "atc_rank"
-
-	//keyword
-)
-
 var (
 	mainScraper = scraper.NewScraper(
 		mainCallback,

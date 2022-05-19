@@ -1,15 +1,12 @@
 package atcoder
 
 import (
+	"XCPCer_board/model"
 	"XCPCer_board/scraper"
 	"github.com/gocolly/colly"
 	log "github.com/sirupsen/logrus"
 	"strconv"
 	"strings"
-)
-
-const (
-	submissionKey = "submission"
 )
 
 var (
@@ -23,33 +20,43 @@ var (
 // submission 信息
 type submission struct {
 	userid string //用户名
-	SMid   string //提交编号
 	CTid   string //比赛编号
 	task   string //题目序号
 	score  int    //题目难度
+	SMid   string //提交编号
 }
 
 //conCallback 处理比赛列表的回调函数
 func conCallback(c *colly.Collector) {
 	d := c.Clone()
-
 	// 获取用户比赛提交页面信息
 	d.OnHTML("table[class=\"table table-bordered table-striped small th-center\"] tbody tr",
 		func(e *colly.HTMLElement) {
 			uid := e.Request.Ctx.Get("uid")
+			if uid == "" {
+				log.Errorf("%v", model.UidError)
+				return
+			}
 			//题目序号
-			task := strings.Split(e.DOM.Find("td:nth-child(2)").First().Text(), "")[0]
+			task := strings.Split(e.DOM.Find("td:nth-child(2)").First().Text(), " ")[0]
+			if task == "" {
+				log.Errorf("task is empty")
+				return
+			}
 			//题目难度
 			score, errSc := strconv.Atoi(e.DOM.Find("td:nth-child(5)").First().Text())
-			//提交编号
-			SMid := e.ChildAttr("td:nth-child(10) a", "href")
-			SMid = strings.Split(SMid, "/")[len(strings.Split(SMid, "/"))-1]
-
 			if errSc != nil {
 				log.Errorf("Submission Score Fetcher Error %v", errSc)
+				return
 			}
-			//fmt.Println(submission{uid, SMid, contestId, task, score})
-			e.Request.Ctx.Put(getSubmissionKey(contestId, task), submission{uid, SMid, contestId, task, score})
+			//提交编号
+			SMidStr := strings.Split(e.ChildAttr("td:nth-child(10) a", "href"), "/")
+			SMid := SMidStr[len(SMidStr)-1]
+			if SMid == "" {
+				log.Errorf("submission id is empty")
+				return
+			}
+			e.Request.Ctx.Put(getSubmissionKey(uid, contestId, task), submission{uid, contestId, task, score, SMid})
 		})
 
 	//获取所有比赛id
@@ -59,15 +66,24 @@ func conCallback(c *colly.Collector) {
 			np, err := strconv.Atoi(e.DOM.Find("div[class=\"text-center\"] ul li:last-child").First().Text())
 			if err != nil {
 				log.Errorf("Atcoder Page Error %v", err)
+				return
 			}
 			maxPage = np
 
 			uid := e.Request.Ctx.Get("uid")
+			if uid == "" {
+				log.Errorf("%v", model.UidError)
+				return
+			}
 			// 访问每个页面的contest
 			e.ForEach("tbody tr", func(i int, element *colly.HTMLElement) {
 				//比赛id
 				cLink := element.ChildAttr("td:nth-child(2) a", "href")
 				contestId = strings.Split(cLink, "/")[2]
+				if contestId == "" {
+					log.Errorf("contest id is empty")
+					return
+				}
 				//部分比赛无访问比赛提交记录权限
 				if err := d.Request("GET", getSubmissionPageUrl(contestId, uid), nil, e.Request.Ctx, nil); err != nil {
 					if err.Error() != "Not Found" {
