@@ -1,6 +1,7 @@
 package nowcoder
 
 import (
+	"XCPCer_board/model"
 	"XCPCer_board/scraper"
 	"github.com/gocolly/colly"
 	log "github.com/sirupsen/logrus"
@@ -13,14 +14,6 @@ import (
 //-------------------------------------------------------------------------------------------//
 // 基础方法
 //-------------------------------------------------------------------------------------------//
-// 牛客finder存储Key
-const (
-	// 个人练习页面
-	passAmountKey = "nowcoder_pass_amount"
-
-	// 个人练习selector关键字
-	passAmountKeyWord = "题已通过"
-)
 
 var (
 	practiceScraper = scraper.NewScraper(
@@ -34,12 +27,17 @@ func practiceCallback(c *colly.Collector) {
 	c.OnHTML(".nk-container.acm-container .nk-container .nk-main.with-profile-menu.clearfix .my-state-main",
 		func(e *colly.HTMLElement) {
 			uid := e.Request.Ctx.Get("uid")
+			if uid == "" {
+				log.Errorf("%v", model.UidError)
+				return
+			}
 			// 题目通过数量
 			num, err := strconv.Atoi(e.DOM.Find(getNowCoderContestBaseFindRule(passAmountKeyWord)).First().Text())
 			if err != nil {
 				log.Errorf("str atoi Error %v", err)
+			} else {
+				e.Request.Ctx.Put(GetPassAmountKey(uid), num)
 			}
-			e.Request.Ctx.Put(getPassAmountKey(uid), num)
 		},
 	)
 }

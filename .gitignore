@@ -22,7 +22,9 @@ config/docker/mysql/datadir
 config/docker/mysql/mydir
 config/docker/mysql/source
 
-*.yaml
+config/docker/redis/datadir
+config/docker/redis/logs
+
 
 #log
 log/
