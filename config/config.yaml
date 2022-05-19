@@ -1,0 +1,9 @@
+#//This file is the configuration file for the XCPC_board project
+storages:
+  mysql:
+    host: localhost:3306
+    username: root
+    password: 10086
+  redis:
+    host: localhost:6379
+    password: 10086

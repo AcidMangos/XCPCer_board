@@ -17,3 +17,14 @@ services:
       # 使用宿主机的3306端口映射到容器的3306端口
       # 宿主机：容器
       - 3306:3306
+  redis:
+    image: redis:7.0
+    container_name: XCPC_board_redis
+    restart: always
+    command: redis-server --requirepass 10086
+    volumes:
+      - ./redis/datadir:/data
+      - ./redis/conf/redis.conf:/usr/local/etc/redis/redis.conf
+      - ./redis/logs:/logs
+    ports:
+      - 6379:6379
