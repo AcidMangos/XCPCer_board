@@ -5,7 +5,7 @@ option go_package = "./codeforces";
 
 message userInfo {
 	string        status = 1; // 请求响应状态
-	repeated info infos  = 2;
+	repeated info result = 2;
 }
 
 message info{
