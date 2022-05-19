@@ -68,6 +68,7 @@ func conCallback(c *colly.Collector) {
 				//比赛id
 				cLink := element.ChildAttr("td:nth-child(2) a", "href")
 				contestId = strings.Split(cLink, "/")[2]
+				//部分比赛无访问比赛提交记录权限
 				if err := d.Request("GET", getSubmissionPageUrl(contestId, uid), nil, e.Request.Ctx, nil); err != nil {
 					if err.Error() != "Not Found" {
 						log.Errorf("atcoder submissionpage error : %v", err)

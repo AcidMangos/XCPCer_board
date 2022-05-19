@@ -20,7 +20,7 @@ func scrape(uid string) (res []scraper.KV) {
 		// 请求
 		kvs, err := f(uid)
 		if err != nil {
-			log.Errorf("GetPersistHandler Fetcher Error %v", err)
+			log.Errorf("atcoder Fetcher Error %v", err)
 			continue
 		}
 		res = append(res, kvs...)
