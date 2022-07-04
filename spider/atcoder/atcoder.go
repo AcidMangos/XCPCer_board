@@ -2,6 +2,7 @@ package atcoder
 
 import (
 	"XCPCer_board/scraper"
+	"fmt"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -25,6 +26,9 @@ func scrape(uid string) (res []scraper.KV) {
 		}
 		res = append(res, kvs...)
 	}
+	fmt.Println(len(res))
+	fmt.Println(res)
+
 	return res
 }
 
